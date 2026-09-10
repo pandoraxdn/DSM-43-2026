@@ -1,8 +1,10 @@
-import { PositionScreen } from "./src/screens/PositionScreen";
+//import { PositionScreen } from "./src/screens/PositionScreen";
+//import { BoxObjectModelScreen } from "./src/screens/BoxObjectModelScreen";
+import { CounterScreen } from "./src/screens/CounterScreen";
 
 const App = () => {
   return (
-    <PositionScreen />
+    <CounterScreen />
   );
 }
 
