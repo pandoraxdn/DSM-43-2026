@@ -13,7 +13,32 @@ const Stack = createStackNavigator<StackParams>();
 
 export const StackNavigator = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      initialRouteName='Screen1'
+      screenOptions={{
+        headerMode:'float',
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: 'pink',
+          borderColor: 'purple',
+          borderRadius: 10,
+          borderWidth: 3,
+          height: 40,
+          opacity: 0.9,
+          shadowColor: 'purple',
+          shadowRadius: 20
+        },
+        headerTitleStyle:{
+          fontWeight: 'bold',
+          color: 'purple',
+          fontSize: 22,
+        },
+        headerTintColor: 'purple',
+        cardStyle: {
+          backgroundColor: 'white'
+        }
+      }}
+    >
       <Stack.Screen
         name="Screen1"
         component={Screen1}
