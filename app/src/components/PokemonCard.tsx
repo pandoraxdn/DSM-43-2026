@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { NewPokemonList } from '../interfaces/pokemonReponse';
+import { useTypeColorPokemon } from '../hooks/useTypeColorPokemon';
 
 interface Props{
   pokemon: NewPokemonList;
@@ -8,8 +10,14 @@ interface Props{
 const widthWindows = Dimensions.get('window').width;
 
 export const PokemonCard = ( { pokemon }:Props ) => {
+
+  const { isLoading, color } = useTypeColorPokemon( pokemon.id );
+  const navigation = useNavigation();
+
   return(
-    <TouchableOpacity>
+    <TouchableOpacity
+      onPress={ () => navigation.navigate('PokemonDetail', { NewPokemonList: pokemon }) }
+    >
       <View
         style={{
           ...style.containerCard,
@@ -17,10 +25,16 @@ export const PokemonCard = ( { pokemon }:Props ) => {
         }}
       >
         <View
-          style={ style.backgroundTop }
+          style={{
+            ...style.backgroundTop,
+            backgroundColor: (isLoading) ? 'gray' : (color.length > 1) ? color[1] : color[0]
+          }}
         />
         <View
-          style={ style.backgroundBottom }
+          style={{
+            ...style.backgroundBottom,
+            backgroundColor: (isLoading) ? 'gray' : color[0]
+          }}
         />
         <Image
           style={ style.pokeball }

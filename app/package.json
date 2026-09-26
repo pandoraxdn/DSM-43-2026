@@ -4,14 +4,21 @@
   "main": "index.ts",
   "dependencies": {
     "@react-native-masked-view/masked-view": "0.3.2",
+    "@react-navigation/drawer": "^7.14.2",
     "@react-navigation/native": "^7.4.1",
     "@react-navigation/stack": "^7.11.2",
     "axios": "^1.20.0",
     "expo": "~57.0.23",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-gesture-handler": "~2.32.0"
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "^0.21.2",
+    "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
