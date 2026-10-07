@@ -5,9 +5,11 @@ import { UsersController } from './users.controller.js';
 import { UsersService } from './users.service.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ 
-    User 
-  ])],
+  imports: [
+    TypeOrmModule.forFeature([ 
+      User 
+    ], "mariadb-connection")
+  ],
   controllers: [UsersController],
   providers: [UsersService],
 })

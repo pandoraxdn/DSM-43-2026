@@ -8,7 +8,7 @@ import { Sensor } from './entities/sensor.entity.js';
 @Injectable()
 export class SensorsService {
   constructor(
-    @InjectRepository( Sensor )
+    @InjectRepository( Sensor, "postgres-connection")
     private sensorRepository: Repository<Sensor>
   ){}
 
