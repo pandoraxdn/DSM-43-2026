@@ -35,13 +35,13 @@ const style = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 20,
     borderWidth: 5,
-    height: 30,
+    height: 45,
     justifyContent: 'center',
     margin: 4,
-    width: 150
+    width: 240
   },
   text: {
-    fontSize: 20,
+    fontSize: 30,
     color: 'white',
   }
 })

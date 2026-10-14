@@ -15,7 +15,7 @@ interface UseUserApi{
 export const useUserApi = (): UseUserApi => {
   const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ listUser, setListUser ] = useState<UserReponse[]>([]);
-  const urlApi = "http://10.172.189.74:3000/users"
+  const urlApi = "http://10.82.139.235:3000/users"
 
   const loadUsers = async () => {
     setIsLoading(true);
@@ -33,21 +33,34 @@ export const useUserApi = (): UseUserApi => {
       username: data.username,
       password: data.password,
       email: data.email,
-      image: data.imagen
+      imagen: data.imagen,
+      location: data.location
     }
 
     await pandoraApi.post( urlApi, dataBody );
   }
 
   const updateUser = async ( data: FormUserData ) => {
-    const dataBody = {
-      username: data.username,
-      password: data.password,
-      email: data.email,
-      image: data.imagen
-    }
+    if (data.password){
+      const dataBody = {
+        username: data.username,
+        password: data.password,
+        email: data.email,
+        imagen: data.imagen,
+        location: data.location
+      }
 
-    await pandoraApi.post( `${urlApi}/${data.id_user}`, dataBody );
+      await pandoraApi.patch( `${urlApi}/${data.id_user}`, dataBody );
+    }else {
+      const dataBody = {
+        username: data.username,
+        email: data.email,
+        imagen: data.imagen,
+        location: data.location
+      }
+
+      await pandoraApi.patch( `${urlApi}/${data.id_user}`, dataBody );
+    }
   }
 
   const deleteUser = async ( data: FormUserData ) => {

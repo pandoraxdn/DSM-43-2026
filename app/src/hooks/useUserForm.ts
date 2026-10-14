@@ -2,11 +2,12 @@ import { useReducer } from "react";
 import { useUserApi } from "./useUserApi";
 
 export interface FormUserData {
-  id_user:  number;
-  username: string;
-  email:    string;
-  password: string;
-  imagen:   string;
+  id_user:    number;
+  username:   string;
+  email:      string;
+  password:   string;
+  imagen:     string;
+  location:   string;
 }
 
 interface UseUserForm{
