@@ -8,7 +8,7 @@ import { UsersService } from './users.service.js';
   imports: [
     TypeOrmModule.forFeature([ 
       User 
-    ], "mariadb-connection")
+    ], "postgres-connection")
   ],
   controllers: [UsersController],
   providers: [UsersService],

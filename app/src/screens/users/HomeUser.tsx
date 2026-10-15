@@ -25,7 +25,8 @@ export const HomeUser = () => {
     password: '',
     email: '',
     imagen: '',
-    location: ''
+    location: '',
+    update: new Date()
   }
 
   return(
@@ -48,6 +49,8 @@ export const HomeUser = () => {
               Lista de usuarios
             </Text>
             <BtnTouch
+              color='olive'
+              borderColor='yellow'
               text='Crear usuario'
               onPress={ () => navigation.navigate('FormUser',{...create}) }
             />

@@ -8,7 +8,7 @@ import { Sensor } from './entities/sensor.entity.js';
   imports: [
     TypeOrmModule.forFeature([
       Sensor
-    ], "postgres-connection")
+    ], "mariadb-connection")
   ],
   controllers: [SensorsController],
   providers: [SensorsService],

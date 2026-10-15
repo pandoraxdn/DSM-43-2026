@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TextInput, ScrollView, Image } from 'react-native';
 import { appTheme } from '../../theme/appTheme';
 import { BtnTouch } from '../../components/BtnTouch';
+import { Fab } from '../../components/Fab';
 import { StackScreenProps } from '@react-navigation/stack';
 import { StackUserParams } from '../../navigator/UserStackNavigator';
 import { useImagePicker } from '../../hooks/useImagePicker';
@@ -26,28 +27,61 @@ export const FormUser = ( { route, navigation }:Props ) => {
   },[]);
 
   useEffect( () => {
-    image64 && handleInputChange('imagen',image64);
+    image64 && handleInputChange('imagen', image64);
   },[ image64 ]);
 
   return(
-    <View
-      style={ appTheme.container }
+    <ScrollView
+      contentContainerStyle={ appTheme.container }
     >
+      <Fab
+        title='<-'
+        color='olive'
+        action={ () => navigation.popToTop() }
+        position='left'
+      />
       <Text
-        style={ appTheme.text }
+        style={{
+          ...appTheme.text,
+          color: 'olive',
+          borderColor: "yellow",
+        }}
       >
-        FormScreen
+        Formulario de usuarios
       </Text>
       <View>
+        {
+          ( state.id_user != 0 ) && (
+            <BtnTouch
+              text='Eliminar usuario'
+              color='red'
+              borderColor='olive'
+              onPress={ () => {
+                handleDelete();
+                navigation.popToTop();
+              }}
+            />
+          )
+        }
+      </View>
+      <View>
         <TextInput
-          style={ appTheme.textInput }
+          style={{
+            ...appTheme.textInput,
+            color: 'olive',
+            borderColor: 'olive'
+          }}
           value={ state.username }
           onChangeText={ (text) => handleInputChange('username',text) }
           placeholder='Ingresa el nombre del usuario'
           placeholderTextColor='black'
         />
         <TextInput
-          style={ appTheme.textInput }
+          style={{
+            ...appTheme.textInput,
+            color: 'olive',
+            borderColor: 'olive'
+          }}
           value={ state.password }
           onChangeText={ (text) => handleInputChange('password',text) }
           placeholder='Contraseña del usuario'
@@ -56,7 +90,11 @@ export const FormUser = ( { route, navigation }:Props ) => {
           secureTextEntry={true}
         />
         <TextInput
-          style={ appTheme.textInput }
+          style={{
+            ...appTheme.textInput,
+            color: 'olive',
+            borderColor: 'olive'
+          }}
           value={ state.email }
           onChangeText={ (text) => handleInputChange('email',text) }
           placeholder='correo'
@@ -80,10 +118,10 @@ export const FormUser = ( { route, navigation }:Props ) => {
             (state.imagen) && (
               <Image
                 style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 100,
-                  borderWidth: 5,
+                  width: 120,
+                  height: 120,
+                  borderRadius: 80,
+                  borderWidth: 8,
                   borderColor: "yellow"
                 }}
                 source={{
@@ -93,33 +131,24 @@ export const FormUser = ( { route, navigation }:Props ) => {
             )
           }
         </View>
-        <TouchableOpacity
-          onPress={ () => {
-            handleSubmit();
-            navigation.popToTop();
+        <View
+          style={{
+            alignContent: "center",
+            justifyContent: 'center',
+            alignItems: 'center'
           }}
         >
-          <View
-            style={{  
-              alignContent: 'center',
-              alignItems: 'center',
-              backgroundColor: 'violet',
-              borderRadius: 10,
-              height: 50,
-              justifyContent: 'center',
-              marginTop: 10,
-              width: 200,
-              alignSelf: 'center'
+          <BtnTouch
+            text={ ( state.id_user == 0 ) ? 'Crear usuario' : 'Actualizar usuario' }
+            color='olive'
+            borderColor='yellow'
+            onPress={ () => {
+              handleSubmit();
+              navigation.popToTop();
             }}
-          >
-            <Text
-              style={{ fontSize: 30, textAlign: 'center' }}
-            >
-              { state.id_user == 0 ? 'Crear usuario' : 'Actualizar Usuario' }
-            </Text>
-          </View>
-        </TouchableOpacity>
+          />
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }

@@ -55,13 +55,14 @@ const style = StyleSheet.create({
     alignContent: 'center',
     alignItems: 'center',
     backgroundColor: 'olive',
+    borderColor: "rgb(138,102,66)",
     borderRadius: 10,
+    borderWidth: 5,
     height: 100,
     justifyContent: 'center',
+    marginHorizontal: 5,
     overflow: 'hidden',
-    width: 160,
-    borderColor: "rgb(138,102,66)",
-    borderWidth: 5
+    width: 160
   },
   text: {
     fontSize: 18,

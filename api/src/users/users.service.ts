@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
 
   constructor(
-    @InjectRepository( User, "mariadb-connection" )
+    @InjectRepository( User, "postgres-connection" )
     private userRepository: Repository<User>
   ){}
 

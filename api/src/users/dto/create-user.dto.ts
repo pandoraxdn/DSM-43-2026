@@ -10,11 +10,15 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
-
   @IsString()
   @MaxLength(255)
   @MinLength(5)
   password: string;
+
+  @IsString()
+  @MaxLength(255)
+  @MinLength(5)
+  location: string;
 
   @IsString()
   imagen: string;

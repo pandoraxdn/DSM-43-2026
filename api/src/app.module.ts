@@ -27,18 +27,6 @@ import { UsersModule } from './users/users.module.js';
       }
     }),
     TypeOrmModule.forRoot({
-      name: 'postgres-connection',
-      type: 'postgres',
-      host: 'localhost',
-      username: 'najimi',
-      password: 'pass',
-      database: 'dsm43',
-      port: 5432,
-      entities: [ Sensor ],
-      synchronize: true,
-      autoLoadEntities: true
-    }),
-    TypeOrmModule.forRoot({
       name: 'mariadb-connection',
       type: 'mariadb',
       host: 'localhost',
@@ -46,6 +34,18 @@ import { UsersModule } from './users/users.module.js';
       password: 'pass',
       port: 3306,
       database: 'DSM43',
+      entities: [ Sensor ],
+      synchronize: true,
+      autoLoadEntities: true
+    }),
+    TypeOrmModule.forRoot({
+      name: 'postgres-connection',
+      type: 'postgres',
+      host: 'localhost',
+      username: 'najimi',
+      password: 'pass',
+      database: 'dsm43',
+      port: 5432,
       entities: [ User ],
       synchronize: true,
       autoLoadEntities: true
