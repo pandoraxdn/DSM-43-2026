@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
-import { View, Text, FlatList, RefreshControl} from 'react-native';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { appTheme } from '../../theme/appTheme';
+import { BtnTouch } from '../../components/BtnTouch';
+import { Fab } from '../../components/Fab';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { UserCard } from '../../components/UserCard';
 import { UserReponse } from '../../interfaces/pandoraApiResponse';
 import { useUserApi } from '../../hooks/useUserApi';
-import { UserCard } from '../../components/UserCard';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
-import {BtnTouch} from '../../components/BtnTouch';
+import { DrawerActions } from '@react-navigation/native';
 
 export const HomeUser = () => {
 
@@ -33,6 +35,12 @@ export const HomeUser = () => {
     <View
       style={ appTheme.container }
     >
+      <Fab
+        title='☰'
+        action={ () => navigation.dispatch(DrawerActions.openDrawer()) }
+        position='left'
+        color='olive'
+      />
       <FlatList
         data={ listUser }
         keyExtractor={ (item) => `#${item.id_user}` }

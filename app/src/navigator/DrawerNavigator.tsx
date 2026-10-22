@@ -1,12 +1,15 @@
+import LoginUser from "../screens/users/LoginUser";
+import { AuthContext } from "../context/AuthContext";
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { StackNavigator } from "./StackNavigator";
-import { useWindowDimensions } from "react-native";
-import { PokemonNavigator } from "./PokemonNavigator";
 import { DrawerMenu } from "../components/DrawerMenu";
 import { FormScreen } from "../screens/FormScreen";
 import { ImagePickerScreen } from "../screens/ImagePickerScreen";
 import { LocationScreen } from "../screens/LocationScreen";
+import { PokemonNavigator } from "./PokemonNavigator";
+import { StackNavigator } from "./StackNavigator";
+import { useContext } from "react";
 import { UserStackNavigator } from "./UserStackNavigator";
+import { useWindowDimensions } from "react-native";
 
 export type RootDrawerParams = {
   StackNavigator:     undefined;
@@ -15,11 +18,12 @@ export type RootDrawerParams = {
   ImagePickerScreen:  undefined;
   LocationScreen:     undefined;
   UserStackNavigator: undefined;
+  LoginUser:          undefined;
 }
 
 const Drawer = createDrawerNavigator<RootDrawerParams>();
 
-export const DrawerNavigator = () => {
+const Navigator = () => {
 
   const { width } = useWindowDimensions();
 
@@ -27,13 +31,13 @@ export const DrawerNavigator = () => {
     <Drawer.Navigator
       initialRouteName='UserStackNavigator'
       screenOptions={{
-        headerShown: true,
-        drawerType:  width > 720 ? 'permanent' : 'front',
         drawerPosition: 'right',
+        drawerType:  width > 720 ? 'permanent' : 'front',
+        headerShown: true,
         overlayColor: 'rgba(255,0,128,0.6)',
         drawerStyle: {
           backgroundColor: 'rgba(0,0,0,0.8)',
-          width: width * 0.75
+          width: width * 0.7
         }
       }}
       drawerContent={ (props) => <DrawerMenu {...props}/> }
@@ -62,8 +66,17 @@ export const DrawerNavigator = () => {
         name="UserStackNavigator"
         component={UserStackNavigator}
       />
+      <Drawer.Screen
+        name="LoginUser"
+        component={LoginUser}
+      />
     </Drawer.Navigator>
   );
+}
+
+export const DrawerNavigator = () => {
+  const { authState } = useContext( AuthContext );
+  return ( authState.isLoggedIn ) ? <Navigator /> : <LoginUser/>;
 }
 
 

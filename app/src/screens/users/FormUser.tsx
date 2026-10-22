@@ -11,7 +11,7 @@ import { useUserForm } from '../../hooks/useUserForm';
 
 interface Props extends StackScreenProps<StackUserParams,'FormUser'>{};
 
-export const FormUser = ( { route, navigation }:Props ) => {
+export const FormUser = ( { route, navigation }: Props ) => {
 
   const { state, handleInputChange, handleSubmit, handleDelete  } = useUserForm();
   const { location } = useLocation();
@@ -74,7 +74,7 @@ export const FormUser = ( { route, navigation }:Props ) => {
           value={ state.username }
           onChangeText={ (text) => handleInputChange('username',text) }
           placeholder='Ingresa el nombre del usuario'
-          placeholderTextColor='black'
+          placeholderTextColor='olive'
         />
         <TextInput
           style={{
@@ -85,7 +85,7 @@ export const FormUser = ( { route, navigation }:Props ) => {
           value={ state.password }
           onChangeText={ (text) => handleInputChange('password',text) }
           placeholder='Contraseña del usuario'
-          placeholderTextColor='black'
+          placeholderTextColor='olive'
           keyboardType='default'
           secureTextEntry={true}
         />
@@ -98,7 +98,7 @@ export const FormUser = ( { route, navigation }:Props ) => {
           value={ state.email }
           onChangeText={ (text) => handleInputChange('email',text) }
           placeholder='correo'
-          placeholderTextColor='black'
+          placeholderTextColor='olive'
           keyboardType='default'
         />
         <View
@@ -118,8 +118,8 @@ export const FormUser = ( { route, navigation }:Props ) => {
             (state.imagen) && (
               <Image
                 style={{
-                  width: 120,
-                  height: 120,
+                  width: 140,
+                  height: 140,
                   borderRadius: 80,
                   borderWidth: 8,
                   borderColor: "yellow"

@@ -1,5 +1,8 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet} from "react-native";
 import { DrawerContentScrollView, DrawerContentComponentProps } from "@react-navigation/drawer";
+import { AuthContext } from "../context/AuthContext";
+import { useContext } from "react";
+import { BtnTouch } from "./BtnTouch";
 
 interface BtnProps{
   navigate: () => void;
@@ -23,6 +26,7 @@ const BtnMenu = ( { navigate, text }:BtnProps ) => {
 }
 
 export const DrawerMenu = ( { navigation }: DrawerContentComponentProps ) => {
+  const { authState, logout} = useContext( AuthContext );
   return (
     <DrawerContentScrollView>
       <View
@@ -36,14 +40,28 @@ export const DrawerMenu = ( { navigation }: DrawerContentComponentProps ) => {
         >
           <Image
             style={ style.avatar }
-            source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqMRKTwf-zYsaWB9QU5hXY8PBNLgQo61e5ML_g6P4NWA&s=10' }}
+            source={
+              (authState.isLoggedIn) ?
+              {uri: `data:image/png;base64,${authState.avatar}`}
+              :
+              { uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqMRKTwf-zYsaWB9QU5hXY8PBNLgQo61e5ML_g6P4NWA&s=10' }
+            }
           />
         </View>
         <Text
           style={ style.userText }
         >
-          User Pandora
+          User: { authState.username }
         </Text>
+        {
+          (authState.isLoggedIn) && (
+            <BtnTouch
+              text="Cerrar sesiòn"
+              color="red"
+              onPress={ () => logout() }
+            />
+          )
+        }
         <View>
           <BtnMenu
             navigate={ () => navigation.navigate('StackNavigator') }
@@ -68,6 +86,10 @@ export const DrawerMenu = ( { navigation }: DrawerContentComponentProps ) => {
           <BtnMenu
             navigate={ () => navigation.navigate('UserStackNavigator') }
             text="Gestión de Usuarios"
+          />
+          <BtnMenu
+            navigate={ () => navigation.navigate('LoginUser') }
+            text="LoginUser"
           />
         </View>
       </View>
