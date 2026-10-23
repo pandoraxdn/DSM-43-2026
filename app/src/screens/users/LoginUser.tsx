@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Animated,
   Easing,
   Image,
@@ -14,18 +16,19 @@ import {
   useWindowDimensions,
   View
 } from 'react-native';
+import { NeonBorder } from '../../components/NeonBorder';
 import { useLogin } from '../../hooks/useLogin';
 
 const SERIF = Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' });
 
 const C = {
-  dark: '#05140d',
-  deep: '#0b291a',
-  emerald: '#10b981',
-  silver: '#e2e8f0',
+  bg:       '#030a06',
+  dark:     '#05140d',
+  deep:     '#0b291a',
+  emerald:  '#10b981',
   platinum: '#94a3b8',
-  slate300: '#cbd5e1',
-  bg: '#030a06',
+  silver:   '#e2e8f0',
+  slate300: '#cbd5e1'
 };
 
 const SEGMENT_COUNT = 70;
@@ -161,24 +164,38 @@ const Serpent = () => {
   );
 }
 
-const LoginCard = () => {
-  const { state, handleLogin, handleInputChange } = useLogin();
+type LoginCardProps = {
+  compact: boolean;
+  onSubmit: () => void;
+};
+
+const LoginCard = ({ compact, onSubmit }: LoginCardProps) => {
+
+  const {handleInputChange, state} = useLogin();
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, compact && { padding: 14, borderRadius: 16 }]}>
       <View style={styles.cardTopAccent} />
 
-      <View style={styles.header}>
-        <View style={styles.emblem}>
-          <Text style={{ fontSize: 28 }}>🛡️</Text>
+      <View style={[styles.header, compact && { marginBottom: 14 }]}>
+        <View style={[styles.emblem, compact && { width: 44, height: 44, borderRadius: 22, marginBottom: 8 }]}>
+          <Text style={{ fontSize: compact ? 20 : 28 }}>🛡️</Text>
         </View>
-        <Text style={styles.title}>DRACONIA PORTAL</Text>
-        <Text style={styles.subtitle}>AMBITION • CUNNING • GREATNESS</Text>
+        <Text
+          style={[styles.title, compact && { fontSize: 15, letterSpacing: 1 }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          DRACONIA PORTAL
+        </Text>
+        <Text style={[styles.subtitle, compact && { fontSize: 6, letterSpacing: 1 }]} numberOfLines={1}>
+          AMBITION • CUNNING • GREATNESS
+        </Text>
       </View>
 
       <Text style={styles.label}>Email</Text>
       <View style={styles.inputWrap}>
-        <Text style={[styles.inputIconLeft, styles.iconText]}>👤</Text>
+        <Text style={[styles.inputIconLeft, styles.iconText, compact && styles.iconCompact]}>👤</Text>
         <TextInput
           value={ state.email }
           onChangeText={ (text) => handleInputChange('email', text) }
@@ -186,46 +203,45 @@ const LoginCard = () => {
           placeholderTextColor="#64748b"
           keyboardType="email-address"
           autoCapitalize="none"
-          style={styles.input}
+          style={[styles.input, compact && styles.inputCompact]}
         />
       </View>
-      <View style={styles.rowBetween}>
+      <View style={[styles.rowBetween, { flexWrap: 'wrap' }]}>
         <Text style={styles.label}>PASSWORD</Text>
         <Pressable>
-          <Text style={styles.forgot}>Se te olvido la palabra</Text>
+          <Text style={[styles.forgot, compact && { fontSize: 10 }]}>Se te olvido la palabra</Text>
         </Pressable>
       </View>
       <View style={styles.inputWrap}>
-        <Text style={[styles.inputIconLeft, styles.iconText]}>🔒</Text>
+        <Text style={[styles.inputIconLeft, styles.iconText, compact && styles.iconCompact]}>🔒</Text>
         <TextInput
           value={ state.password }
-          onChangeText={ (text) => handleInputChange('password',text) }
+          onChangeText={ (text) => handleInputChange('password', text) }
           placeholder="••••••••••••"
           placeholderTextColor="#64748b"
           secureTextEntry={true}
           autoCapitalize="none"
-          style={[styles.input, { paddingRight: 44 }]}
+          style={[styles.input, compact ? styles.inputCompact : { paddingRight: 44 }]}
         />
       </View>
 
-      {/* Submit */}
-      <Pressable onPress={ handleLogin } style={({ pressed }) => [pressed && { transform: [{ scale: 0.98 }] }]}>
-        <View style={styles.button}>
+      <Pressable onPress={onSubmit} style={({ pressed }) => [pressed && { transform: [{ scale: 0.98 }] }]}>
+        <View style={[styles.button, compact && { paddingVertical: 11 }]}>
           <Text style={styles.buttonText}>Login</Text>
           <Text style={styles.arrow}>→</Text>
         </View>
       </Pressable>
 
-      {/* Footer */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, compact && { marginTop: 16, paddingTop: 12, gap: 4, flexWrap: 'wrap' }]}>
         <Text style={{ fontSize: 13 }}>🛡️</Text>
-        <Text style={styles.footerText}>Protected by Encryption</Text>
+        <Text style={[styles.footerText, compact && { fontSize: 10 }]}>Protected by Encryption</Text>
       </View>
     </View>
   );
 }
 
-function Character() {
+function CharacterBackground({ width, compact }: { width: number; compact: boolean }) {
+
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -239,38 +255,72 @@ function Character() {
     return () => anim.stop();
   }, [pulse]);
 
-  const glowOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] });
-
   return (
-    <View style={styles.neonWrap}>
-      {/* Capas de brillo (funcionan igual en iOS y Android) */}
-      <Animated.View pointerEvents="none" style={[styles.neonGlow, styles.neonGlowOuter, { opacity: glowOpacity }]} />
-      <Animated.View pointerEvents="none" style={[styles.neonGlow, styles.neonGlowMid, { opacity: glowOpacity }]} />
+    <View pointerEvents="none" style={[styles.bgPanel, { width }]}>
+      <Image
+        source={require('./../../../assets/draconia.png')}
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%'
+        }}
+      />
 
-      <View style={styles.characterWrap}>
-        <Image
-          source={require('./../../../assets/draconia.png')}
-          style={styles.characterImg}
-          resizeMode="cover"
-        />
-        <View style={styles.characterCaption}>
-          <Text style={styles.characterName}>Draconia Malfoy</Text>
-          <Text style={styles.characterHouse}>HOUSE OF SLYTHERIN</Text>
-        </View>
+      <View style={styles.fade}>
+        {Array.from({ length: 16 }, (_, i) => (
+          <View
+            key={i}
+            style={{ flex: 1, backgroundColor: `rgba(3,10,6,${(Math.pow(i / 15, 1.6) * 0.97).toFixed(3)})` }}
+          />
+        ))}
+      </View>
+
+      <View style={[styles.caption, compact && { bottom: 20, left: 16 }]}>
+        <Text style={[styles.characterName, compact && { fontSize: 13 }]}>Draconia Malfoy</Text>
+        <Text style={[styles.characterHouse, compact && { fontSize: 8, letterSpacing: 1 }]}>HOUSE OF SLYTHERIN</Text>
       </View>
     </View>
   );
 }
 
+const LoadingOverlay = ({ visible }: { visible: boolean }) => {
+  if (!visible) return null;
+  return (
+    <View style={styles.loadingOverlay}>
+      <ActivityIndicator size="large" color={C.emerald} />
+      <Text style={styles.loadingText}>Entrando...</Text>
+    </View>
+  );
+};
+
 export default function LoginUser() {
   const { width } = useWindowDimensions();
-  const isWide = width >= 768;
+  const compact = width < 768;
+
+  const {handleLogin, isLoading} = useLogin();
+
+  const onSubmit = () => {
+    try {
+      handleLogin();
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'No se pudo iniciar sesión. Inténtalo de nuevo.';
+      Alert.alert('Error al iniciar sesión', message, [{ text: 'Aceptar' }]);
+      return;
+    }
+  };
+
+  const panelWidth = width * (compact ? 0.55 : 0.55);
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
 
       <View style={styles.bgGlow} />
+
+      <CharacterBackground width={panelWidth} compact={compact} />
 
       <Serpent />
 
@@ -281,24 +331,32 @@ export default function LoginUser() {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { flexDirection: isWide ? 'row' : 'column' },
+            {
+              justifyContent: 'flex-end',
+              padding: compact ? 10 : 20,
+              paddingRight: compact ? 10 : width * 0.08,
+              paddingTop: 50,
+            },
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.col, isWide && { maxWidth: 440 }]}>
-            <LoginCard />
-          </View>
-          <View style={[styles.col, isWide && { maxWidth: 440 }]}>
-            <Character />
+          <View style={{ width: '80%', marginHorizontal: 10 }}>
+            <LoginCard compact={compact} onSubmit={onSubmit} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <LoadingOverlay visible={isLoading} />
+      <NeonBorder />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
+  root: { 
+    backgroundColor: C.bg,
+    flex: 1
+  },
   segment: {
     position: 'absolute',
     top: 0,
@@ -315,17 +373,30 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#34d399',
   },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(3,10,6,0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    zIndex: 100,
+    elevation: 100,
+  },
+  loadingText: { fontWeight: '600', fontSize: 12, letterSpacing: 2, color: C.slate300 },
+  bgPanel: { position: 'absolute', top: 0, bottom: 0, left: 0, overflow: 'hidden' },
+  fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: '55%', flexDirection: 'row' },
+  caption: { position: 'absolute', bottom: 30, left: 24 },
   bgGlow: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(16,185,129,0.07)' },
   scroll: {
     flexGrow: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
     paddingTop: 60,
     gap: 24,
   },
-  col: { width: '100%', alignItems: 'center' },
-
+  col: { minWidth: 0, alignItems: 'center' },
   card: {
     width: '100%',
     backgroundColor: 'rgba(8,31,20,0.9)',
@@ -341,7 +412,6 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   cardTopAccent: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: C.silver, opacity: 0.6 },
-
   header: { alignItems: 'center', marginBottom: 28 },
   emblem: {
     width: 64,
@@ -375,7 +445,6 @@ const styles = StyleSheet.create({
     color: C.platinum,
     marginTop: 4,
   },
-
   label: {
     fontWeight: '600',
     fontSize: 11,
@@ -385,7 +454,6 @@ const styles = StyleSheet.create({
   },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   forgot: { fontWeight: '400', fontSize: 12, color: C.emerald, marginBottom: 6 },
-
   inputWrap: { justifyContent: 'center', marginBottom: 18 },
   input: {
     fontWeight: '400',
@@ -399,13 +467,14 @@ const styles = StyleSheet.create({
     paddingLeft: 44,
     paddingRight: 16,
   },
+  inputCompact: { fontSize: 12, paddingLeft: 32, paddingRight: 8, paddingVertical: 9 },
+  iconCompact: { fontSize: 12, left: 10 },
   inputIconLeft: { position: 'absolute', left: 14, zIndex: 1 },
   inputIconRight: { position: 'absolute', right: 14, zIndex: 1 },
   iconText: { fontSize: 15 },
   toggleText: { fontWeight: '700', fontSize: 10, letterSpacing: 1, color: C.platinum },
   checkMark: { fontWeight: '700', fontSize: 11, lineHeight: 13, color: C.dark },
   arrow: { fontWeight: '700', fontSize: 16, color: '#a7f3d0' },
-
   rememberRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
   checkbox: {
     width: 16,
@@ -419,7 +488,6 @@ const styles = StyleSheet.create({
   },
   checkboxOn: { backgroundColor: C.emerald, borderColor: '#34d399' },
   rememberText: { fontWeight: '400', fontSize: 12, color: C.slate300 },
-
   button: {
     backgroundColor: '#059669',
     flexDirection: 'row',
@@ -437,7 +505,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     color: C.silver,
   },
-
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -449,7 +516,6 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(51,65,85,0.4)',
   },
   footerText: { fontWeight: '400', fontSize: 12, color: '#94a3b8' },
-
   neonWrap: { width: '100%', margin: 12 },
   neonGlow: { position: 'absolute', borderColor: '#34d399' },
   neonGlowOuter: {
