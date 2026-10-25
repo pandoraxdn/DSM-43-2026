@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -31,34 +31,158 @@ const C = {
   slate300: '#cbd5e1'
 };
 
-const SEGMENT_COUNT = 70;
-const PARTICLE_COUNT = 40;
+const SEGMENT_COUNT = 120;
+const PARTICLE_COUNT = 70;
 
 const Serpent = () => {
+
   const { width, height } = useWindowDimensions();
+  const SAMPLES = 360;
+  const TWO_PI = Math.PI * 2;
+  const clamp = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
+  const s = clamp(Math.min(width, height) / 390, 0.8, 1.5);
+  const u = (v: number) => v * s;
+  const anchorStyle = { position: 'absolute' as const, left: 0, top: 0, width: 0, height: 0 };
 
-  const radii = useRef(
-    Array.from({ length: SEGMENT_COUNT }, (_, i) => {
-      let r: number;
-      if (i === 0) r = 0.8;
-      else if (i < 5) r = 0.8 - i * 0.04;
-      else r = Math.max(0.08, 0.65 * (1 - i / SEGMENT_COUNT));
-      return Math.max(3, r * 18);
-    })
-  ).current;
-
-  const xs = useRef(Array.from({ length: SEGMENT_COUNT }, () => new Animated.Value(0))).current;
-  const ys = useRef(Array.from({ length: SEGMENT_COUNT }, () => new Animated.Value(0))).current;
-
-  const particles = useRef(
-    Array.from({ length: PARTICLE_COUNT }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      size: 1.5 + Math.random() * 2.5,
-      phase: Math.random(),
-    }))
-  ).current;
+  const progress = useRef(new Animated.Value(0)).current;
   const twinkle = useRef(new Animated.Value(0)).current;
+
+  const model = useMemo(() => {
+    const bodyR = 9 * s;
+    const segLen = 5.5 * s;
+    const swayAmp = 5 * s;
+    const margin = bodyR + 20 * s + 12;
+    const ax = (width / 2 - margin) / 1.06;
+    const ay = (height / 2 - margin - 20) / 1.06;
+
+    const K = 1200;
+    const px: number[] = [];
+    const py: number[] = [];
+    const cum: number[] = [0];
+    for (let k = 0; k <= K; k++) {
+      const th = (k / K) * TWO_PI;
+      px.push(width / 2 + ax * (Math.sin(2 * th) + 0.06 * Math.cos(5 * th)));
+      py.push(height / 2 + ay * (Math.sin(3 * th + 0.6) + 0.06 * Math.cos(2 * th)));
+      if (k > 0) cum.push(cum[k - 1] + Math.hypot(px[k] - px[k - 1], py[k] - py[k - 1]));
+    }
+    const L = cum[K];
+
+    const at = (sv: number) => {
+      let d = sv % L;
+      if (d < 0) d += L;
+      let lo = 0;
+      let hi = K;
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (cum[mid] <= d) lo = mid;
+        else hi = mid;
+      }
+      const seg = cum[lo + 1] - cum[lo] || 1;
+      const f = (d - cum[lo]) / seg;
+      return {
+        x: px[lo] + (px[lo + 1] - px[lo]) * f,
+        y: py[lo] + (py[lo + 1] - py[lo]) * f,
+        tx: (px[lo + 1] - px[lo]) / seg,
+        ty: (py[lo + 1] - py[lo]) / seg,
+      };
+    };
+
+    const speed = 105 * s;
+    const T = L / speed;
+    const periodMs = T * 1000;
+    const m = Math.max(1, Math.round(T * 0.67));
+
+    const radii = Array.from({ length: SEGMENT_COUNT }, (_, i) => {
+      const t = i / (SEGMENT_COUNT - 1);
+      const neck = Math.min(1, 0.75 + t * 4);
+      return Math.max(1.2 * s, bodyR * Math.pow(1 - t, 0.7) * neck);
+    });
+
+    const xs: number[][] = Array.from({ length: SEGMENT_COUNT }, () => []);
+    const ys: number[][] = Array.from({ length: SEGMENT_COUNT }, () => []);
+    const headRot: number[] = [];
+    const tongue: number[] = [];
+    let prevAng = 0;
+
+    for (let j = 0; j <= SAMPLES; j++) {
+      const t = j / SAMPLES;
+
+      for (let i = 0; i < SEGMENT_COUNT; i++) {
+        const p = at(t * L - i * segLen);
+        const nx = -p.ty;
+        const ny = p.tx;
+        const sway =
+          Math.sin(TWO_PI * m * t - i * 0.22) *
+          swayAmp *
+          Math.min(1, i / 10) *
+          (0.4 + (0.6 * i) / (SEGMENT_COUNT - 1));
+        xs[i].push(p.x + nx * sway);
+        ys[i].push(p.y + ny * sway);
+      }
+
+      const hp = at(t * L);
+      let ang = Math.atan2(hp.ty, hp.tx);
+      if (j > 0) {
+        while (ang - prevAng > Math.PI) ang -= TWO_PI;
+        while (ang - prevAng < -Math.PI) ang += TWO_PI;
+      }
+      prevAng = ang;
+      headRot.push(ang);
+
+      tongue.push(clamp((Math.sin(TWO_PI * 5 * t) - 0.6) / 0.4, 0, 1));
+    }
+
+    return { xs, ys, headRot, tongue, radii, periodMs };
+  }, [width, height, s]);
+
+  const nodes = useMemo(() => {
+    const inputRange = Array.from({ length: SAMPLES + 1 }, (_, j) => j / SAMPLES);
+    const mk = (arr: number[]) =>
+      progress.interpolate({ inputRange, outputRange: arr, extrapolate: 'clamp' });
+    return {
+      xs: model.xs.map(mk),
+      ys: model.ys.map(mk),
+      headRot: progress.interpolate({
+        inputRange,
+        outputRange: model.headRot.map((a) => `${a}rad`),
+        extrapolate: 'clamp',
+      }),
+      tongue: mk(model.tongue),
+    };
+  }, [model, progress]);
+
+  const particles = useMemo(
+    () =>
+      Array.from({ length: PARTICLE_COUNT }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: 1.5 + Math.random() * 2.5,
+      })),
+    [width, height]
+  );
+
+  const twinkleA = useMemo(
+    () => twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.8] }),
+    [twinkle]
+  );
+  const twinkleB = useMemo(
+    () => twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.8, 0.2] }),
+    [twinkle]
+  );
+
+  useEffect(() => {
+    progress.setValue(0);
+    const anim = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: model.periodMs,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [progress, model.periodMs]);
 
   useEffect(() => {
     const anim = Animated.loop(
@@ -71,35 +195,34 @@ const Serpent = () => {
     return () => anim.stop();
   }, [twinkle]);
 
-  useEffect(() => {
-    const px = new Array<number>(SEGMENT_COUNT).fill(width / 2);
-    const py = new Array<number>(SEGMENT_COUNT).fill(height / 2);
-    let t = 0;
-    let frame = 0;
+  const order = useMemo(
+    () => Array.from({ length: SEGMENT_COUNT }, (_, k) => SEGMENT_COUNT - 1 - k),
+    []
+  );
 
-    const loop = () => {
-      frame = requestAnimationFrame(loop);
-      t += 0.018;
+  const disc = (R: number, color: string, opacity = 1) => (
+    <View
+      style={{
+        position: 'absolute',
+        left: -R,
+        top: -R,
+        width: R * 2,
+        height: R * 2,
+        borderRadius: R,
+        backgroundColor: color,
+        opacity,
+      }}
+    />
+  );
 
-      px[0] = width / 2 + Math.sin(t * 0.7) * (width * 0.42) + Math.cos(t * 1.8) * 10;
-      py[0] = height / 2 + Math.sin(t * 1.4) * (height * 0.4) + Math.cos(t * 0.5) * 8;
-
-      for (let i = 1; i < SEGMENT_COUNT; i++) {
-        const wave = Math.sin(t * 4 - i * 0.15) * 0.9;
-        px[i] += (px[i - 1] - px[i]) * 0.3 + wave;
-        py[i] += (py[i - 1] - py[i]) * 0.3 + wave;
-      }
-
-      for (let i = 0; i < SEGMENT_COUNT; i++) {
-        xs[i].setValue(px[i] - radii[i]);
-        ys[i].setValue(py[i] - radii[i]);
-      }
-    };
-    loop();
-    return () => cancelAnimationFrame(frame);
-  }, [width, height, xs, ys, radii]);
-
-  const twinkleOpacity = twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.8] });
+  const anchor = (i: number, key: string, child: React.ReactNode) => (
+    <Animated.View
+      key={key}
+      style={[anchorStyle, { transform: [{ translateX: nodes.xs[i] }, { translateY: nodes.ys[i] }] }]}
+    >
+      {child}
+    </Animated.View>
+  );
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
@@ -108,73 +231,118 @@ const Serpent = () => {
           key={`p${i}`}
           style={{
             position: 'absolute',
-            left: p.x * width,
-            top: p.y * height,
+            left: p.x,
+            top: p.y,
             width: p.size,
             height: p.size,
             borderRadius: p.size,
             backgroundColor: '#a7f3d0',
-            opacity: i % 2 === 0 ? twinkleOpacity : Animated.subtract(1, twinkleOpacity),
+            opacity: i % 2 === 0 ? twinkleA : twinkleB,
           }}
         />
       ))}
 
-      {Array.from({ length: SEGMENT_COUNT }, (_, k) => SEGMENT_COUNT - 1 - k).map((i) => {
-        const size = radii[i] * 2;
-        const isHead = i === 0;
-        const isScale = i % 6 === 0 && !isHead;
-        return (
-          <Animated.View
-            key={`s${i}`}
-            style={[
-              styles.segment,
-              {
-                width: size,
-                height: size,
-                borderRadius: radii[i],
-                backgroundColor: isHead ? '#e2e8f0' : isScale ? '#10b981' : '#c0c0c0',
-                borderColor: isScale ? '#6ee7b7' : 'rgba(255,255,255,0.55)',
-                shadowColor: isScale ? '#10b981' : '#000',
-                shadowOpacity: isScale ? 0.9 : 0.4,
-                transform: [{ translateX: xs[i] }, { translateY: ys[i] }],
-              },
-            ]}
-          >
-            <View
-              style={{
-                position: 'absolute',
-                top: size * 0.14,
-                left: size * 0.2,
-                width: size * 0.34,
-                height: size * 0.26,
-                borderRadius: size,
-                backgroundColor: 'rgba(255,255,255,0.55)',
-              }}
-            />
-            {isHead && (
-              <>
-                <View style={[styles.eye, { top: size * 0.3, left: size * 0.18 }]} />
-                <View style={[styles.eye, { top: size * 0.3, right: size * 0.18 }]} />
-              </>
-            )}
-          </Animated.View>
-        );
-      })}
+      {order.map((i) => (i % 3 === 0 ? anchor(i, `g${i}`, disc(model.radii[i] * 2.1, '#10b981', 0.07)) : null))}
+
+      {order.map((i) => anchor(i, `o${i}`, disc(model.radii[i] + 1.3 * s, '#cbd5e1', 0.75)))}
+
+      {order.map((i) =>
+        anchor(i, `f${i}`, disc(model.radii[i], i % 7 === 5 ? '#2f9e7a' : '#0b3d2e'))
+      )}
+
+      {order.map((i) =>
+        i >= 9 && i < SEGMENT_COUNT - 4 && i % 7 === 2
+          ? anchor(i, `d${i}`, disc(model.radii[i] * 0.38, '#e2e8f0', 0.85))
+          : null
+      )}
+
+      <Animated.View
+        style={[
+          anchorStyle,
+          {
+            transform: [
+              { translateX: nodes.xs[0] },
+              { translateY: nodes.ys[0] },
+              { rotate: nodes.headRot },
+            ],
+          },
+        ]}
+      >
+        <Animated.View style={[anchorStyle, { opacity: nodes.tongue }]}>
+          <View style={{ position: 'absolute', left: u(19), top: u(-0.8), width: u(11), height: u(1.6), backgroundColor: '#f43f5e', borderRadius: u(1) }} />
+          <View style={{ position: 'absolute', left: u(29.6), top: u(-2.6), width: u(6), height: u(1.6), backgroundColor: '#f43f5e', borderRadius: u(1), transform: [{ rotate: '-28deg' }] }} />
+          <View style={{ position: 'absolute', left: u(29.6), top: u(1.0), width: u(6), height: u(1.6), backgroundColor: '#f43f5e', borderRadius: u(1), transform: [{ rotate: '28deg' }] }} />
+        </Animated.View>
+
+        <View
+          style={{
+            position: 'absolute',
+            left: u(-13.2),
+            top: u(-13.2),
+            width: u(34.4),
+            height: u(26.4),
+            backgroundColor: '#cbd5e1',
+            borderTopLeftRadius: u(9),
+            borderBottomLeftRadius: u(9),
+            borderTopRightRadius: u(13.2),
+            borderBottomRightRadius: u(13.2),
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            left: u(-12),
+            top: u(-12),
+            width: u(32),
+            height: u(24),
+            backgroundColor: '#0f5132',
+            borderTopLeftRadius: u(8),
+            borderBottomLeftRadius: u(8),
+            borderTopRightRadius: u(12),
+            borderBottomRightRadius: u(12),
+          }}
+        />
+        <View style={{ position: 'absolute', left: u(4), top: u(-9), width: u(15), height: u(18), borderRadius: u(9), backgroundColor: '#16a34a', opacity: 0.55 }} />
+        <View style={{ position: 'absolute', left: u(-6), top: u(-9), width: u(14), height: u(5), borderRadius: u(5), backgroundColor: '#fff', opacity: 0.22 }} />
+
+        <View style={{ position: 'absolute', left: u(15.1), top: u(-3.4), width: u(1.8), height: u(1.8), borderRadius: u(1), backgroundColor: '#022c22' }} />
+        <View style={{ position: 'absolute', left: u(15.1), top: u(1.6), width: u(1.8), height: u(1.8), borderRadius: u(1), backgroundColor: '#022c22' }} />
+
+        <View style={{ position: 'absolute', left: u(1), top: u(-12), width: u(10), height: u(10), borderRadius: u(5), backgroundColor: '#bef264', opacity: 0.35 }} />
+        <View style={{ position: 'absolute', left: u(1), top: u(2), width: u(10), height: u(10), borderRadius: u(5), backgroundColor: '#bef264', opacity: 0.35 }} />
+        <View style={{ position: 'absolute', left: u(3), top: u(-10.5), width: u(6), height: u(7), borderRadius: u(3.5), backgroundColor: '#d9f99d' }} />
+        <View style={{ position: 'absolute', left: u(3), top: u(3.5), width: u(6), height: u(7), borderRadius: u(3.5), backgroundColor: '#d9f99d' }} />
+        <View style={{ position: 'absolute', left: u(5.1), top: u(-9.6), width: u(1.8), height: u(5.2), borderRadius: u(1), backgroundColor: '#020617' }} />
+        <View style={{ position: 'absolute', left: u(5.1), top: u(4.4), width: u(1.8), height: u(5.2), borderRadius: u(1), backgroundColor: '#020617' }} />
+      </Animated.View>
     </View>
   );
-}
+};
 
 type LoginCardProps = {
   compact: boolean;
-  onSubmit: () => void;
 };
 
-const LoginCard = ({ compact, onSubmit }: LoginCardProps) => {
+const LoginCard = ({ compact }: LoginCardProps) => {
 
-  const {handleInputChange, state} = useLogin();
+  const { state, handleLogin, handleInputChange } = useLogin();
+
+  const onSubmit = () => {
+    try {
+      handleLogin();
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'No se pudo iniciar sesión. Inténtalo de nuevo.';
+      Alert.alert('Error al iniciar sesión', message, [{ text: 'Aceptar' }]);
+      return;
+    }
+  };
 
   return (
     <View style={[styles.card, compact && { padding: 14, borderRadius: 16 }]}>
+
       <View style={styles.cardTopAccent} />
 
       <View style={[styles.header, compact && { marginBottom: 14 }]}>
@@ -287,7 +455,7 @@ const LoadingOverlay = ({ visible }: { visible: boolean }) => {
   if (!visible) return null;
   return (
     <View style={styles.loadingOverlay}>
-      <ActivityIndicator size="large" color={C.emerald} />
+      <ActivityIndicator size={80} color={C.emerald} />
       <Text style={styles.loadingText}>Entrando...</Text>
     </View>
   );
@@ -297,22 +465,8 @@ export default function LoginUser() {
   const { width } = useWindowDimensions();
   const compact = width < 768;
 
-  const {handleLogin, isLoading} = useLogin();
-
-  const onSubmit = () => {
-    try {
-      handleLogin();
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : 'No se pudo iniciar sesión. Inténtalo de nuevo.';
-      Alert.alert('Error al iniciar sesión', message, [{ text: 'Aceptar' }]);
-      return;
-    }
-  };
-
   const panelWidth = width * (compact ? 0.55 : 0.55);
+  const { isLoading } = useLogin();
 
   return (
     <View style={styles.root}>
@@ -341,7 +495,7 @@ export default function LoginUser() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ width: '80%', marginHorizontal: 10 }}>
-            <LoginCard compact={compact} onSubmit={onSubmit} />
+            <LoginCard compact={compact} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -375,12 +529,12 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(3,10,6,0.75)',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    zIndex: 100,
+    backgroundColor: 'rgba(3,10,6,0.75)',
     elevation: 100,
+    gap: 12,
+    justifyContent: 'center',
+    zIndex: 100
   },
   loadingText: { fontWeight: '600', fontSize: 12, letterSpacing: 2, color: C.slate300 },
   bgPanel: { position: 'absolute', top: 0, bottom: 0, left: 0, overflow: 'hidden' },
