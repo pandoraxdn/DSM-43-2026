@@ -13,4 +13,14 @@ export class Sensor {
 
   @Column({ type: 'float', nullable: false })
   distancia_inch: number;
+
+  @Column({ type: 'float', nullable: false })
+  temperatura_celcius: number;
+
+  @Column({ type: 'float', nullable: false })
+  temperatura_f: number;
 }
+
+
+
+
