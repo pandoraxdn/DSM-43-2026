@@ -2,19 +2,20 @@
 /**
  * Carga masiva de lecturas del sensor para pruebas de rendimiento.
  * Genera N lecturas repartidas de forma uniforme a lo largo de UN AÑO COMPLETO
- * y las envía por lotes a:  POST /sensors/consultas/insertar-masivo
+ * (por defecto el año actual) y las envía por lotes a:
+ *   POST /sensors/consultas/insertar-masivo
  *
  * Requisitos: Node 18+ (usa fetch global). No necesita instalar paquetes.
  * Funciona igual si tu proyecto es CommonJS o ESM (no usa import/require).
  *
  * USO
- *   node insertar-datos.js                      → 500,000 lecturas del 2025
+ *   node insertar-datos.js                      → 500,000 lecturas del año actual
  *   node insertar-datos.js 100000               → 100,000 lecturas
- *   node insertar-datos.js 1000000 --anio=2025  → 1,000,000 lecturas
+ *   node insertar-datos.js 1000000 --anio=2026  → 1,000,000 lecturas
  *
  * OPCIONES (todas con "=", ej. --lote=500)
  *   --total=N         Lecturas a generar (1 a 1,000,000 recomendado)   [500000]
- *   --anio=AAAA       Año que se cubre, del 1 ene al 31 dic            [2025]
+ *   --anio=AAAA       Año que se cubre, del 1 ene al 31 dic            [año actual]
  *   --lote=N          Filas por petición                               [500]
  *   --concurrencia=N  Peticiones simultáneas                           [4]
  *   --reintentos=N    Reintentos por lote ante errores de red/5xx      [5]
@@ -63,7 +64,7 @@ const entero = (v, def) => {
 };
 
 const TOTAL = entero(args.total ?? args._[0], 500_000);
-const ANIO = entero(args.anio, 2025);
+const ANIO = entero(args.anio, new Date().getFullYear());
 const LOTE = entero(args.lote, 500);
 const CONCURRENCIA = entero(args.concurrencia, 4);
 const REINTENTOS = entero(args.reintentos, 5);

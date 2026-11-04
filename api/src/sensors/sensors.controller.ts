@@ -41,6 +41,11 @@ export class SensorsController {
     return this.sensorsService.total();
   }
 
+  @Get('consultas/data')
+  async data() {
+    return await this.sensorsService.data();
+  }
+
   @Post('consultas/insertar-masivo')
   async insertMasivo( @Body() lecturas: Sensor[] ){
     await this.sensorsService.insertMasivo(
