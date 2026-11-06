@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, useWindowDimensions, RefreshControl} from 'react-native';
 import { useDataResponse } from '../hooks/useDataReponse';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { appTheme } from '../theme/appTheme';
@@ -140,7 +140,6 @@ export const DataResponseScreen = () => {
 
   const { total, estadisticas }= data;
 
-  
   const temperatura = data.ultimasHoras.map(a => ({
     value: Number(a.temperatura_celcius),
     label: hora(a.fecha),
@@ -180,6 +179,15 @@ export const DataResponseScreen = () => {
         flexGrow: 1,
         padding: 20
       }}
+      refreshControl={
+        <RefreshControl
+          refreshing={isLoading}
+          onRefresh={loadData}
+          tintColor={C.frio}
+          colors={[ C.frio ]}
+          progressBackgroundColor={ C.tarjeta }
+        />
+      }
     >
       <View>
         <Text style={style.header}>Monitor del sensor</Text>
